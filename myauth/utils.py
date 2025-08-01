@@ -2,6 +2,7 @@ from myauth.models import Permission, Resource, UserRole
 
 
 def has_permission(user, resource_name, action):
+    """Проверяет, имеет ли пользователь разрешение на выполнение действия"""
     try:
         resource = Resource.objects.get(name=resource_name)
     except Resource.DoesNotExist:

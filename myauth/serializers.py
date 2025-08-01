@@ -5,6 +5,7 @@ from myauth.models import User
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    """Сериализатор регистрации пользователя"""
     password = serializers.CharField(write_only=True, min_length=8)
     password2 = serializers.CharField(write_only=True, min_length=8)
 
@@ -29,11 +30,13 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class LoginSerializer(serializers.Serializer):
+    """Сериализатор для авторизации пользователя."""
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """Сериализатор отображения информации о пользователе"""
     class Meta:
         model = User
         fields = ['email', 'first_name', 'last_name']
@@ -41,6 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    """Сериализатор обновления данных пользователя"""
     class Meta:
         model = User
         fields = ['first_name', 'last_name']

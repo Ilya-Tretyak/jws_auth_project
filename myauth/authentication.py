@@ -5,6 +5,7 @@ from rest_framework import authentication, exceptions
 from myauth.models import User
 
 class JWTAuthentication(authentication.BaseAuthentication):
+    """Кастомный класс аутентификации на основе JWT для Django REST Framework"""
     def authenticate(self, request):
         auth_header = authentication.get_authorization_header(request).decode('utf-8')
 

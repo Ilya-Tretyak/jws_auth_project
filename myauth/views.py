@@ -18,6 +18,7 @@ MOCK_POSTS = [
 
 
 class RegisterView(APIView):
+    """Представление для регистрации новых пользователей"""
     permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(request_body=RegisterSerializer)
@@ -30,6 +31,7 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    """Представление для аутентификации пользователей и выдачи JWT-токена"""
     permission_classes = [permissions.AllowAny]
 
     @swagger_auto_schema(request_body=LoginSerializer)
@@ -52,6 +54,7 @@ class LoginView(APIView):
 
 
 class UserProfileView(APIView):
+    """Представление для работы с пользователем"""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
@@ -85,6 +88,7 @@ class UserProfileView(APIView):
 
 
 class NewFeedView(APIView):
+    """Представление для работы с новостной лентой"""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):

@@ -134,6 +134,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'myauth.User'
 
+# настройка собственного класса аутентификации JWT
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'myauth.authentication.JWTAuthentication',
@@ -144,7 +145,7 @@ REST_FRAMEWORK = {
 }
 
 
-
+#Настройка Swagger UI
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Bearer': {

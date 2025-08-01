@@ -3,6 +3,8 @@ from myauth.models import User, Role, UserRole, Permission, Resource
 
 
 class Command(BaseCommand):
+    """Команда инициализирует базовые роли, ресурсы и права доступа,
+    а также создаёт двух тестовых пользователей"""
     def init_roles_and_permissions(self):
         # Создание ролей
         moderator_role, _ = Role.objects.get_or_create(name='Moderator')

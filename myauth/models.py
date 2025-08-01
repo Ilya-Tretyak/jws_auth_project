@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 
 
 class UserManager(BaseUserManager):
+    """Кастомный менеджер пользователей"""
     def create_user(self, email, first_name, last_name, password=None, **extra_fields):
         if not email:
             raise ValueError("Email обязательное поле")
@@ -19,6 +20,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+    """Кастомная модель пользователя"""
     first_name = models.CharField('Имя', max_length=50)
     last_name = models.CharField('Фамилия', max_length=50)
     middle_name = models.CharField('Отчество', max_length=50, blank=True)
@@ -37,6 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Role(models.Model):
+    """Модель роли пользователя"""
     name = models.CharField('Роль', max_length=50, unique=True)
 
     def __str__(self):
@@ -44,6 +47,7 @@ class Role(models.Model):
 
 
 class UserRole(models.Model):
+    """Связующая модель между пользователями и их ролями"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_roles')
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='role_users')
 
@@ -52,6 +56,7 @@ class UserRole(models.Model):
 
 
 class Resource(models.Model):
+    """Модель ресурса, к которому можно назначать права"""
     name = models.CharField('Ресурс', max_length=50, unique=True)
 
     def __str__(self):
@@ -59,6 +64,7 @@ class Resource(models.Model):
 
 
 class Permission(models.Model):
+    """Модель прав доступа"""
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='permissions')
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE, related_name='permissions')
     can_read = models.BooleanField('Чтение', default=False)

@@ -18,8 +18,8 @@
 
 1. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/твой_ник/my-django-auth-project.git
-   cd my-django-auth-project
+   git clone https://github.com/Ilya-Tretyak/jws_auth_project
+   cd jws_auth_project
    ```
 2. Создайте виртуальное окружение и активируйте его:
    ```bash
@@ -47,7 +47,7 @@
    python manage.py runserver
    ```
    
-## Документация API
+## API
 
 Swagger доступен по адресу: http://127.0.0.1:8000/swagger/
 

@@ -9,6 +9,7 @@ ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 def create_jwt_token(user_id):
+    """Создает JWT-токен с заданным идентификатором пользователя и временем жизни"""
     payload = {
         'user_id': user_id,
         'exp': datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
@@ -19,6 +20,7 @@ def create_jwt_token(user_id):
     return token
 
 def decode_jwt_token(token):
+    """Декодирует JWT-токен и возвращает полезную нагрузку, если токен валиден и не истёк"""
     try:
         payload = jwt.decode(token, SECRETE_KEY, algorithms=[ALGORITHM])
         return payload
