@@ -81,8 +81,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'effective_auth_db',
-        'USER': 'ilya',
-        'PASSWORD': 'Natalya1.',
+        'USER': 'user',
+        'PASSWORD': 'password.',
         'HOST': 'localhost',
         'PORT': '5432',
     }
