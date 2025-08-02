@@ -53,3 +53,10 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name', 'last_name']
+
+
+
+class RoleSerializer(serializers.Serializer):
+    """Сериализатор ролей"""
+    class Meta:
+        role = serializers.CharField()

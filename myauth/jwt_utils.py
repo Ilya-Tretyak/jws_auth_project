@@ -1,6 +1,7 @@
 import jwt
 
-from datetime import datetime, UTC, timedelta
+from datetime import timedelta
+from django.utils import timezone
 from django.conf import settings
 
 from myauth.models import RefreshToken, BlacklistedToken
@@ -14,8 +15,8 @@ def create_jwt_token(user_id):
     """Создает JWT-токен с заданным идентификатором пользователя и временем жизни"""
     payload = {
         'user_id': user_id,
-        'exp': datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        'iat': datetime.now(UTC),
+        'exp': timezone.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        'iat': timezone.now(),
     }
 
     token = jwt.encode(payload, SECRETE_KEY, algorithm=ALGORITHM)
@@ -27,23 +28,23 @@ def create_jwt_tokens(user_id):
     access_payload = {
         'user_id': user_id,
         'type': 'access',
-        'exp': datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
-        'iat': datetime.now(UTC),
+        'exp': timezone.now() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+        'iat': timezone.now(),
     }
     access_token = jwt.encode(access_payload, SECRETE_KEY, algorithm=ALGORITHM)
 
     refresh_payload = {
         'user_id': user_id,
         'type': 'refresh',
-        'exp': datetime.now(UTC) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAY),
-        'iat': datetime.now(UTC)
+        'exp': timezone.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAY),
+        'iat': timezone.now()
     }
     refresh_token = jwt.encode(refresh_payload, SECRETE_KEY, algorithm=ALGORITHM)
 
     RefreshToken.objects.create(
         user_id=user_id,
         token=refresh_token,
-        expired_at=datetime.now(UTC) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAY)
+        expired_at=timezone.now() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAY)
     )
 
     return {'access_token': access_token, 'refresh_token': refresh_token}
@@ -68,4 +69,12 @@ def is_token_blacklisted(token):
         return True
     except BlacklistedToken.DoesNotExist:
         return False
+
+
+def clean_user_tokens(user_id):
+    """проверка и удаление из БД истекших RefreshToken и BlacklistedToken"""
+    now = timezone.now()
+    RefreshToken.objects.filter(user_id=user_id, expired_at__lt=now).delete()
+
+    BlacklistedToken.objects.filter(user_id=user_id, expired_at__lt=now).delete()
 

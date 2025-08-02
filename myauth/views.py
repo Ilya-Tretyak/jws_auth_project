@@ -1,4 +1,4 @@
-from datetime import timezone, datetime
+import datetime
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -6,15 +6,22 @@ from rest_framework import status, permissions, authentication
 
 from django.contrib.auth import authenticate
 
-from myauth.models import RefreshToken, BlacklistedToken
+from myauth.models import (
+    RefreshToken,
+    BlacklistedToken,
+    User,
+    Role,
+    UserRole
+)
 from myauth.serializers import (
     RegisterSerializer,
     LoginSerializer,
     LogoutSerializer,
     UserSerializer,
-    UserUpdateSerializer
+    UserUpdateSerializer,
+    RoleSerializer
 )
-from myauth.jwt_utils import create_jwt_token, create_jwt_tokens, decode_jwt_token
+from myauth.jwt_utils import create_jwt_token, create_jwt_tokens, decode_jwt_token, clean_user_tokens
 from myauth.utils import has_permission
 
 from drf_yasg.utils import swagger_auto_schema
@@ -53,6 +60,7 @@ class LoginView(APIView):
             user = authenticate(request, email=email, password=password)
 
             if user is not None and user.is_active:
+                clean_user_tokens(user.id)
                 token = create_jwt_tokens(user.id)
                 return Response({"token": token})
             return Response(
@@ -117,9 +125,9 @@ class LogoutView(APIView):
         if not access_payload:
             return Response({'error': 'Неверный access_token'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        expired_at = datetime.fromtimestamp(access_payload['exp'], timezone.utc)
+        expired_at = datetime.datetime.fromtimestamp(access_payload['exp'], tz=datetime.timezone.utc)
 
-        BlacklistedToken.objects.create(token=access_token, expired_at=expired_at)
+        BlacklistedToken.objects.create(user=request.user, token=access_token, expired_at=expired_at)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -192,3 +200,40 @@ class NewFeedView(APIView):
                 return Response({'message': f'Пост {post_id} удален!'}, status=status.HTTP_204_NO_CONTENT)
 
         return Response({'message': f'Пост {post_id} удален'}, status=status.HTTP_200_OK)
+
+
+class UserRoleManagementView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    @swagger_auto_schema(request_body=RoleSerializer)
+    def post(self, request, user_id):
+        role_name = request.data.get('role')
+        if not role_name:
+            return Response({'error': 'Роли не существует'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(id=user_id)
+            role = Role.objects.get(name=role_name)
+        except (User.DoesNotExist, Role.DoesNotExist):
+            return Response({'error': 'User или Role не найден'}, status=status.HTTP_404_NOT_FOUND)
+
+        UserRole.objects.filter(user=user).delete()
+        UserRole.objects.create(user=user, role=role)
+
+        return Response({'message': f'Роль {role_name} успешно присвоена пользователю {user.email}'}, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(request_body=RoleSerializer)
+    def delete(self, request, user_id):
+        role_name = request.data.get('role')
+
+        if not role_name:
+            return Response({'error': 'Роли не существует'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(id=user_id)
+            role = Role.objects.get(name=role_name)
+        except (User.DoesNotExist, Role.DoesNotExist):
+            return Response({'error': 'User или Role не найден'}, status=status.HTTP_404_NOT_FOUND)
+
+        UserRole.objects.filter(user=user, role=role).delete()
+        return Response({'status': f'Роль {role_name} успешна удалена у пользователя {user.email}'}, status=status.HTTP_200_OK)

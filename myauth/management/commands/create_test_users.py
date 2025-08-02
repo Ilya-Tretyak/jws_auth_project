@@ -44,7 +44,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.init_roles_and_permissions()
 
-        moderator = User.objects.create_user(
+        moderator = User.objects.create_superuser(
             email='mod@mail.ru',
             password='modpassword',
             first_name='Илья',

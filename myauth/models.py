@@ -93,6 +93,7 @@ class RefreshToken(models.Model):
 
 class BlacklistedToken(models.Model):
     """Модель access токена добавленного в Blacklisted"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=300, unique=True)
     blacklisted_at = models.DateTimeField(auto_now_add=True)
     expired_at = models.DateTimeField()
