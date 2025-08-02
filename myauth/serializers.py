@@ -35,6 +35,11 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 
+class LogoutSerializer(serializers.Serializer):
+    """Сериализатор для выхода"""
+    refresh_token = serializers.CharField()
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Сериализатор отображения информации о пользователе"""
     class Meta:

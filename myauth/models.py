@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
+from django.utils import timezone
+
 
 class UserManager(BaseUserManager):
     """Кастомный менеджер пользователей"""
@@ -78,3 +80,22 @@ class Permission(models.Model):
         return f"{self.role.name} - {self.resource.name}"
 
 
+class RefreshToken(models.Model):
+    """Модель refresh токена"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=300, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expired_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() >= self.expired_at
+
+
+class BlacklistedToken(models.Model):
+    """Модель access токена добавленного в Blacklisted"""
+    token = models.CharField(max_length=300, unique=True)
+    blacklisted_at = models.DateTimeField(auto_now_add=True)
+    expired_at = models.DateTimeField()
+
+    def is_expired(self):
+        return timezone.now() >= self.expired_at

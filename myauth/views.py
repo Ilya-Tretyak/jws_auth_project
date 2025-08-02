@@ -1,11 +1,20 @@
+from datetime import timezone, datetime
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status, permissions, authentication
 
 from django.contrib.auth import authenticate
 
-from myauth.serializers import RegisterSerializer, LoginSerializer, UserSerializer, UserUpdateSerializer
-from myauth.jwt_utils import create_jwt_token
+from myauth.models import RefreshToken, BlacklistedToken
+from myauth.serializers import (
+    RegisterSerializer,
+    LoginSerializer,
+    LogoutSerializer,
+    UserSerializer,
+    UserUpdateSerializer
+)
+from myauth.jwt_utils import create_jwt_token, create_jwt_tokens, decode_jwt_token
 from myauth.utils import has_permission
 
 from drf_yasg.utils import swagger_auto_schema
@@ -44,13 +53,77 @@ class LoginView(APIView):
             user = authenticate(request, email=email, password=password)
 
             if user is not None and user.is_active:
-                token = create_jwt_token(user.id)
+                token = create_jwt_tokens(user.id)
                 return Response({"token": token})
             return Response(
                 {"error": "Неверные данные пользователя или пользователь удален!"},
                 status= status.HTTP_401_UNAUTHORIZED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RefreshTokenView(APIView):
+    """Представление для создания нового access токена по refresh токену"""
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh_token')
+        if not refresh_token:
+            return Response({"error": "refresh-token обязателен!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        payload = decode_jwt_token(refresh_token)
+        if not payload or payload.get('type') != 'refresh':
+            return Response({'error': 'Недействительный refresh_token!'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            token_object = RefreshToken.objects.get(token=refresh_token)
+        except RefreshToken.DoesNotExist:
+            return Response({'error': 'refresh_token не найден!'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if token_object.is_expired():
+            return Response({'error': 'refresh_token истек!'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        access_token = create_jwt_token(payload['user_id'])
+
+        return Response({'access_token': access_token}, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    """Представление для logout пользователей, удаления refresh токена и помещения access токена в Blacklisted"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(request_body=LogoutSerializer)
+    def post(self, request):
+        refresh_token = request.data.get('refresh_token')
+        if not refresh_token:
+            return Response({'error': 'refresh_token отсутствует!'}, status= status.HTTP_400_BAD_REQUEST)
+
+        payload = decode_jwt_token(refresh_token)
+        if not payload or payload.get('type') != 'refresh':
+            return Response({'error': 'Неверный refresh_token!'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        deleted, _ = RefreshToken.objects.filter(token=refresh_token).delete()
+
+        if deleted == 0:
+            return Response({'error': 'refresh_token уже отозван или не найден!'})
+
+        auth_header = authentication.get_authorization_header(request).decode('utf-8')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return Response({'error': 'access_token отсутствует в заголовке!'}, status=status.HTTP_400_BAD_REQUEST)
+
+        access_token = auth_header.split(' ')[1]
+
+        access_payload = decode_jwt_token(access_token)
+        if not access_payload:
+            return Response({'error': 'Неверный access_token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        expired_at = datetime.fromtimestamp(access_payload['exp'], timezone.utc)
+
+        BlacklistedToken.objects.create(token=access_token, expired_at=expired_at)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 
 
 class UserProfileView(APIView):
@@ -119,7 +192,3 @@ class NewFeedView(APIView):
                 return Response({'message': f'Пост {post_id} удален!'}, status=status.HTTP_204_NO_CONTENT)
 
         return Response({'message': f'Пост {post_id} удален'}, status=status.HTTP_200_OK)
-
-
-
-

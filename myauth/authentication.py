@@ -3,6 +3,7 @@ import jwt
 from django.conf import settings
 from rest_framework import authentication, exceptions
 from myauth.models import User
+from myauth.jwt_utils import is_token_blacklisted
 
 class JWTAuthentication(authentication.BaseAuthentication):
     """Кастомный класс аутентификации на основе JWT для Django REST Framework"""
@@ -13,6 +14,9 @@ class JWTAuthentication(authentication.BaseAuthentication):
             return None
 
         token = auth_header.split(' ')[1]
+
+        if is_token_blacklisted(token):
+            raise exceptions.AuthenticationFailed("Токен заблокирован (logout)")
 
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])

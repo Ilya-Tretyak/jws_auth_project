@@ -145,7 +145,7 @@ REST_FRAMEWORK = {
 }
 
 
-#Настройка Swagger UI
+# настройки Swagger UI
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Bearer': {
