@@ -50,7 +50,19 @@
    pip install -r requirements.txt
    ```
    
-4. Выполните миграции и инициализируйте роли и права:
+4. Создать файл .env в корне проекта и добавить переменные с настройками БД:
+
+`DB_NAME=Название базы данных`
+
+`DB_USER=Имя пользователя`
+
+`DB_PASSWORD=Пароль`
+
+`DB_HOST=Хост`
+
+`DB_PORT='Порт'`
+   
+5. Выполните миграции и инициализируйте роли и права:
 
    ```bash
    python manage.py makemigrations
@@ -64,7 +76,7 @@
 | mod@mail.ru  | Илья       | Модератор    | modpassword  |
 | user@mail.ru | Илья       | Пользователь | userpassword |
    
-5. Запустите сервер:
+6. Запустите сервер:
 
    ```bash
    python manage.py runserver
